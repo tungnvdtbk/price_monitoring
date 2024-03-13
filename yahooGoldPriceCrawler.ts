@@ -17,11 +17,11 @@ console.log("start log");
 async function crawlYahooGoldPrice() {
   try {
     
-    //const quote = await yahooFinance.quote('GC=F');
-    //const { regularMarketPrice , currency } = quote;
-    //currentPrice = regularMarketPrice as number;
+    // const quote = await yahooFinance.quote('GC=F');
+    // const { regularMarketPrice , currency } = quote;
+    // currentPrice = regularMarketPrice as number;
 
-    currentPrice = await extractGoldPrice();
+    currentPrice = await extractGoldPriceYahoo();
     
     if (lastPrice > 0) {
       if (currentPrice > 0) {
@@ -29,7 +29,7 @@ async function crawlYahooGoldPrice() {
         if (lastPeriodPrice > 0) {
           if (currentPeriodPrice / lastPeriodPrice > THRESHOLD) {
               console.log("breakout");
-              sendEmail("Price BO", `Check price ratio: ${currentPeriodPrice/ lastPeriodPrice}`, "tungnvdtbk@gmail.com");
+              sendEmail("Price BO", `Check price ratio: ${currentPeriodPrice/ lastPeriodPrice}, cp:${currentPrice}, lp:${lastPrice}, cpr:${currentPeriodPrice}, lpr:${lastPeriodPrice}`, "tungnvdtbk@gmail.com");
           }
         }
       }
@@ -88,11 +88,41 @@ async function extractGoldPrice()  {
   }
   return output ;
 }
+
+async function extractGoldPriceYahoo()  {
+  let output: number = 0;
+  try {
+      const response = await axios.get('https://finance.yahoo.com/recent-quotes/',
+      {headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+      }});
+      const htmlContent = response.data;
+
+      const $ = cheerio.load(htmlContent);
+      const priceValue = $('fin-streamer[data-symbol="GC=F"][data-field="regularMarketPrice"]').text().trim();
+      
+
+      if (priceValue.length > 0) {
+        output = parseNumberWithCommas(priceValue);  
+        console.log("Gold Price:", priceValue);
+      } else {
+          console.log("Price not found");
+      }
+      
+  } catch (error) {
+      console.error("Error fetching or parsing the page:", error.message);
+  }
+  return output ;
+}
 function parseNumberWithCommas(value: string): number {
   return parseFloat(value.replace(/,/g, ''));
 }
 
 //extractGoldPrice();
+
+// setInterval(async() => {
+//   console.log("price yahoo:",  await extractGoldPriceYahoo())
+// }, 5000)
 
 setInterval(crawlYahooGoldPrice, PERIOD_IN_MINISECONDS);
 //setInterval(crawlYahooGoldPrice, 1000);
