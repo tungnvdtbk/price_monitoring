@@ -10,8 +10,9 @@ let currentPrice: number = 0;
 let lastPeriodPrice: number = 0;
 let currentPeriodPrice: number =0;
 
-const PERIOD_IN_MINISECONDS: number = 1*60*1000;
-const THRESHOLD: number = 7;
+const PERIOD_IN_MINISECONDS: number = 5*60*1000;
+const THRESHOLD: number = 15;
+const RANGE_THRESHOLD: number = 25;
 
 console.log("start log");
 async function crawlYahooGoldPrice() {
@@ -22,6 +23,9 @@ async function crawlYahooGoldPrice() {
     // currentPrice = regularMarketPrice as number;
 
     currentPrice = await extractGoldPriceYahoo();
+
+    let currentDateTime = addHoursToDate(new Date(), 7).toUTCString();
+    console.log(`Price:${currentPrice}, time: ${currentDateTime}`);
     
     if (lastPrice > 0) {
       if (currentPrice > 0) {
@@ -29,7 +33,11 @@ async function crawlYahooGoldPrice() {
         if (lastPeriodPrice > 0) {
           if (currentPeriodPrice / lastPeriodPrice > THRESHOLD) {
               console.log("breakout");
-              sendEmail("Price BO", `Check price ratio: ${currentPeriodPrice/ lastPeriodPrice}, cp:${currentPrice}, lp:${lastPrice}, cpr:${currentPeriodPrice}, lpr:${lastPeriodPrice}`, "tungnvdtbk@gmail.com");
+              sendEmail(`[Ratio-BO] time: ${currentDateTime}`, `Check price ratio : ${currentPeriodPrice/ lastPeriodPrice}, cp:${currentPrice}, lp:${lastPrice}, cpr:${currentPeriodPrice}, lpr:${lastPeriodPrice}`, "tungnvdtbk@gmail.com");
+          }
+          if (currentPeriodPrice  > RANGE_THRESHOLD) {
+            console.log("breakout");
+            sendEmail(`[Range-BO] time: ${currentDateTime}`, `Check price ratio: ${currentPeriodPrice/ lastPeriodPrice}, cp:${currentPrice}, lp:${lastPrice}, cpr:${currentPeriodPrice}, lpr:${lastPeriodPrice}`, "tungnvdtbk@gmail.com");
           }
         }
       }
@@ -118,6 +126,13 @@ function parseNumberWithCommas(value: string): number {
   return parseFloat(value.replace(/,/g, ''));
 }
 
+
+function addHoursToDate(date: Date, hoursToAdd: number): Date {
+  const newDate = new Date(date.getTime());
+  newDate.setHours(newDate.getHours() + hoursToAdd);
+  return newDate;
+}
+
 //extractGoldPrice();
 
 // setInterval(async() => {
@@ -126,6 +141,8 @@ function parseNumberWithCommas(value: string): number {
 
 setInterval(crawlYahooGoldPrice, PERIOD_IN_MINISECONDS);
 //setInterval(crawlYahooGoldPrice, 1000);
+
+
 
 
 

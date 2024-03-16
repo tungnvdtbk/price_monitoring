@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc yahooGoldPriceCrawler.ts",
+    "deploy": "docker build --progress=plain -t tungnv2/price-monitoring . && docker push tungnv2/price-monitoring",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
